@@ -8,21 +8,21 @@ import logging
 
 from pymodbus.payload import BinaryPayloadBuilder, BinaryPayloadDecoder
 from pymodbus.device import ModbusDeviceIdentification
-from pymodbus.version import version as ModbusVersion
+#from pymodbus.constants import  as ModbusVersion
 from pymodbus.constants import Endian
 
 #from pymodbus.server import StartSerialServer
 #from pymodbus.server.async import StartSerialServer
-from pymodbus.server.sync import StartSerialServer
+from pymodbus.server import StartSerialServer
 
-from pymodbus.transaction import ModbusRtuFramer
+from pymodbus.framer import FramerRTU
 from pymodbus.datastore import ModbusSequentialDataBlock, ModbusSparseDataBlock
 from pymodbus.datastore import ModbusSlaveContext, ModbusServerContext
 
 from threading import Thread
 
-wordorder = Endian.Big
-byteorder = Endian.Big
+wordorder = Endian.BIG
+byteorder = Endian.BIG
 
 header = [207, 701, 0, 0, 0, 0, 1, 10, 0, 0, 0, 1, 0, 0, 0, 1000, 0, 0, 1000, 0, 0, 1000, 0, 0, 1000, 1, 10, 0, 0, 0, 1000, 0, 0, 1000, 0, 0, 1000, 0, 0, 1000, 0, 0, 0, 0, 3, 3, 4]
 
@@ -61,21 +61,21 @@ Registermapping = {
 class dtsu666Emulator:
 	def __init__(self, 
 		device,
-		SlaveID=0x04
+		SlaveID=0xfe
 		):
 		
 		self.threads = {}
 
 		# ----------------------------------------------------------------------- #
 		# initialize the server information
-		i1 = ModbusDeviceIdentification()
-		i1.VendorName = 'Pymodbus'
-		i1.ProductCode = 'PM'
-		i1.VendorUrl = 'http://github.com/riptideio/pymodbus/'
-		i1.ProductName = 'Pymodbus Server'
-		i1.ModelName = 'Pymodbus Server'
+		#i1 = ModbusDeviceIdentification()
+		#i1.VendorName = 'Pymodbus'
+		#i1.ProductCode = 'PM'
+		#i1.VendorUrl = 'http://github.com/riptideio/pymodbus/'
+		#i1.ProductName = 'Pymodbus Server'
+		#i1.ModelName = 'Pymodbus Server'
 #		i1.MajorMinorRevision = '1.5'
-		i1.MajorMinorRevision = ModbusVersion.short()
+		#i1.MajorMinorRevision = ModbusVersion.short()
 
 
 #		self.RS485Port=device
@@ -103,8 +103,9 @@ class dtsu666Emulator:
 
 	#------------------------------------------------
 	def _startserver(self):
-		srv = StartSerialServer(context=self.context, framer=ModbusRtuFramer, **self.RS485Settings)
-
+		framer=FramerRTU
+		srv = StartSerialServer(context=self.context, **self.RS485Settings)
+		
 		logging.info('Modbus server started')
 
 	#------------------------------------------------
@@ -150,7 +151,7 @@ class dtsu666Emulator:
 if __name__ == "__main__":
 
 	#RS485Port = '/dev/serial/by-path/platform-3f980000.usb-usb-0:1.1.2:1.0-port0' # Smartmeter
-	RS485Port = "/dev/pts/7"
+	RS485Port = "COM18"
 
 	em1 = dtsu666Emulator(
 		device=RS485Port
