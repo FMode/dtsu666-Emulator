@@ -74,7 +74,7 @@ def sync_mqtt(dtsu666_hr: CallbackDataBlock):
                 builder.add_32bit_int(round(float(message.payload.decode())))
                 # builder.add_32bit_int(124)
                 dtsu666_hr.setValues(0x164+1,builder.to_registers()) 
-            case "smartmeter/0/1-0:56_7_0__255/value"
+            case "smartmeter/0/1-0:56_7_0__255/value":
                 builder = BinaryPayloadBuilder(byteorder=Endian.BIG, wordorder=Endian.BIG)
                 builder.add_32bit_int(round(float(message.payload.decode())))
                 dtsu666_hr.setValues(0x166+1,builder.to_registers()) 
@@ -84,6 +84,14 @@ def sync_mqtt(dtsu666_hr: CallbackDataBlock):
                 dtsu666_hr.setValues(0x168+1,builder.to_registers()) 
             case _:
                 pass
+
+    def on_disconnect(client, userdata, rc):
+        builder = BinaryPayloadBuilder(byteorder=Endian.BIG, wordorder=Endian.BIG)
+        builder.add_32bit_int(0)
+        dtsu666_hr.setValues(0x164+1,builder.to_registers())
+        dtsu666_hr.setValues(0x166+1,builder.to_registers())
+        dtsu666_hr.setValues(0x168+1,builder.to_registers())
+        dtsu666_hr.setValues(0x16A+1,builder.to_registers())
 
     #def on_publish(mosq, obj, mid):
     #    print("mid: " + str(mid))
@@ -98,6 +106,7 @@ def sync_mqtt(dtsu666_hr: CallbackDataBlock):
     # Assign event callbacks
     mqttc.on_message = on_message
     mqttc.on_connect = on_connect
+    mqttc.on_disconnect = on_disconnect
     #mqttc.on_publish = on_publish
     #mqttc.on_subscribe = on_subscribe
     # Connect
@@ -115,13 +124,22 @@ if __name__ == "__main__":
         hr=dtsu666_hr
     )
 
+    builder = BinaryPayloadBuilder(byteorder=Endian.BIG, wordorder=Endian.BIG)
+    builder.add_32bit_int(0)
+    dtsu666_hr.setValues(0x164+1,builder.to_registers())
+    dtsu666_hr.setValues(0x166+1,builder.to_registers())
+    dtsu666_hr.setValues(0x168+1,builder.to_registers())
+    dtsu666_hr.setValues(0x16A+1,builder.to_registers())
+
     thread = threading.Thread(target = sync_mqtt, args=(dtsu666_hr,))
     thread.start()
+    
+
     StartSerialServer(
         context=ModbusServerContext(slaves=slavecontext, single=True),  # Data storage
         # identity=args.identity,  # server identify
         timeout=0.040,  # waiting time for request to complete
-        port="COM15",  # serial port
+        port="/dev/ttyACM0",  # serial port
         # custom_functions=[],  # allow custom handling
         # framer=args.framer,  # The framer strategy to use
         # stopbits=1,  # The number of stop bits to use
